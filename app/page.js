@@ -14,6 +14,7 @@ import "react-toastify/dist/ReactToastify.css";
 export default function Home() {
   const [userInput, setUserInput] = useState("");
   const [weatherForcast, setWeatherForcast] = useState();
+  const [getLocationState, setGetLocationState] = useState(false);
 
   // get weather forcast...
   // const getForcast = async () => {
@@ -29,6 +30,7 @@ export default function Home() {
   // };
 
   const getCurrentLocation = () => {
+    setGetLocationState(false);
     if (typeof window !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -42,9 +44,13 @@ export default function Home() {
           });
 
           setWeatherForcast(weatherData);
+          if (weatherData) {
+            setGetLocationState(true);
+          }
         },
         (error) => {
           console.error("Error getting location:", error.message);
+          setGetLocationState(false);
         }
       );
     } else {
@@ -56,13 +62,19 @@ export default function Home() {
   }, []);
 
   const handleSearch = async () => {
+    if (!userInput) {
+      toast.error("Please enter a location");
+      getCurrentLocation();
+      return;
+    }
     const weatherData = await getWeatherData(userInput);
-    console.log(weatherData);
+
     if (weatherData.errorMessage) {
       getCurrentLocation();
       return;
     }
     setWeatherForcast(weatherData);
+    setGetLocationState(true);
   };
 
   return (
@@ -106,68 +118,67 @@ export default function Home() {
               </p>
             </div>
           </div>
-
-          <div className="w-full min-h-[60dvh] flex flex-col 2xl:flex-row xl:flex-row lg:flex-row md:portrait:flex-col justify-between items-center gap-8  my-auto">
-            <div className="flex-1 w-full shrink-0  flex justify-start items-center h-full p-4">
-              <div className="w-full flex flex-col gap-8">
-                <div>
-                  <h2 className="relative 2xl:text-[8dvw] xl:text-[8dvw] lg:text-[8dvw] md:portrait:text-[12dvw] text-[16dvw] mainFont 2xl:leading-[9dvw] xl:leading-[9dvw] lg:leading-[9dvw] md:portrait:leading-[13dvw] leading-[17dvw] ">
-                    {weatherForcast?.forcast[0].main.temp}
-                    <span className="absolute -top-[2dvw] text-[1.4dvw] ">
-                      &#8451;
-                    </span>
-                  </h2>
-                  <p className="2xl:text-[2.5dvw] xl:text-[2.5dvw] lg:text-[2.5dvw] md:portrait:text-[5dvw] text-[6dvw] mainFont capitalize">
-                    {weatherForcast?.forcast[0].weather[0].description}
-                  </p>
-                </div>
-                <div className="flex justify-around items-center w-full">
-                  <div className="flex flex-col gap-1 justify-center items-center">
-                    <span className="flex justify-start items-center gap-2 paraFont">
-                      <Wind /> Wind
-                    </span>
-                    <h4 className=" 2xl:text-[2dvw] xl:text-[2dvw] lg:text-[2dvw] md:portrait:text-[4dvw] text-[5dvw] mainFont">
-                      {weatherForcast?.forcast[0].wind.speed}km/h
-                    </h4>
+          {getLocationState && (
+            <div className="w-full min-h-[60dvh] flex flex-col 2xl:flex-row xl:flex-row lg:flex-row md:portrait:flex-col justify-between items-center gap-8  my-auto">
+              <div className="flex-1 w-full shrink-0  flex justify-start items-center h-full p-4">
+                <div className="w-full flex flex-col gap-8">
+                  <div>
+                    <h2 className="relative 2xl:text-[8dvw] xl:text-[8dvw] lg:text-[8dvw] md:portrait:text-[12dvw] text-[16dvw] mainFont 2xl:leading-[9dvw] xl:leading-[9dvw] lg:leading-[9dvw] md:portrait:leading-[13dvw] leading-[17dvw] ">
+                      {weatherForcast?.forcast[0].main.temp}
+                      <span className="absolute -top-[2dvw] text-[1.4dvw] ">
+                        &#8451;
+                      </span>
+                    </h2>
+                    <p className="2xl:text-[2.5dvw] xl:text-[2.5dvw] lg:text-[2.5dvw] md:portrait:text-[5dvw] text-[6dvw] mainFont capitalize">
+                      {weatherForcast?.forcast[0].weather[0].description}
+                    </p>
                   </div>
-                  <div className="flex flex-col justify-center items-center gap-1">
-                    <span className="flex justify-start items-center gap-2 paraFont">
-                      <Droplets /> Humidity
-                    </span>
-                    <h4 className="2xl:text-[2dvw] xl:text-[2dvw] lg:text-[2dvw] md:portrait:text-[4dvw] text-[5dvw] mainFont">
-                      {weatherForcast?.forcast[0].main.humidity}%
-                    </h4>
+                  <div className="flex justify-around items-center w-full">
+                    <div className="flex flex-col gap-1 justify-center items-center">
+                      <span className="flex justify-start items-center gap-2 paraFont">
+                        <Wind /> Wind
+                      </span>
+                      <h4 className=" 2xl:text-[2dvw] xl:text-[2dvw] lg:text-[2dvw] md:portrait:text-[4dvw] text-[5dvw] mainFont">
+                        {weatherForcast?.forcast[0].wind.speed}km/h
+                      </h4>
+                    </div>
+                    <div className="flex flex-col justify-center items-center gap-1">
+                      <span className="flex justify-start items-center gap-2 paraFont">
+                        <Droplets /> Humidity
+                      </span>
+                      <h4 className="2xl:text-[2dvw] xl:text-[2dvw] lg:text-[2dvw] md:portrait:text-[4dvw] text-[5dvw] mainFont">
+                        {weatherForcast?.forcast[0].main.humidity}%
+                      </h4>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="2xl:w-[45%] xl:w-[45%] lg:w-[45%] md:portrait:w-[45%] w-full shrink-0 relative flex justify-center items-center h-full p-4">
-              <div className="relative 2xl:w-[25dvw] xl:w-[25dvw] lg:w-[25dvw] md:portrait:w-[25dvw] w-[45dvw] 2xl:h-[25dvw] xl:h-[25dvw] lg:h-[25dvw] md:portrait:h-[25dvw] h-[40dvw]">
-                <Image
-                  alt="weather.com"
-                  className="w-full h-full object-contain"
-                  src={`https://openweathermap.org/img/wn/${weatherForcast?.forcast[0].weather[0].icon}@2x.png`}
-                
-                  fill
-                  loading="lazy"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 w-full shrink-0  h-full p-4">
-              <div className="border border-white/50 backdrop-blur-xl flex flex-col gap-8 bg-transparent rounded-xl p-4 ">
-                {weatherForcast?.forcast.map((cur, id) => (
-                  <ForcastCard
-                    key={id}
-                    icon={cur.weather[0].icon}
-                    day={cur.dt_txt}
-                    description={cur.weather[0].description}
-                    temp={cur.main.temp}
+              <div className="2xl:w-[45%] xl:w-[45%] lg:w-[45%] md:portrait:w-[45%] w-full shrink-0 relative flex justify-center items-center h-full p-4">
+                <div className="relative 2xl:w-[25dvw] xl:w-[25dvw] lg:w-[25dvw] md:portrait:w-[25dvw] w-[45dvw] 2xl:h-[25dvw] xl:h-[25dvw] lg:h-[25dvw] md:portrait:h-[25dvw] h-[40dvw]">
+                  <Image
+                    alt="weather.com"
+                    className="w-full h-full object-contain"
+                    src={`https://openweathermap.org/img/wn/${weatherForcast?.forcast[0].weather[0].icon}@2x.png`}
+                    fill
+                    loading="lazy"
                   />
-                ))}
+                </div>
+              </div>
 
-                {/* <div key={id} className="flex justify-center items-center gap-4">
+              <div className="flex-1 w-full shrink-0  h-full p-4">
+                <div className="border border-white/50 backdrop-blur-xl flex flex-col gap-8 bg-transparent rounded-xl p-4 ">
+                  {weatherForcast?.forcast.map((cur, id) => (
+                    <ForcastCard
+                      key={id}
+                      icon={cur.weather[0].icon}
+                      day={cur.dt_txt}
+                      description={cur.weather[0].description}
+                      temp={cur.main.temp}
+                    />
+                  ))}
+
+                  {/* <div key={id} className="flex justify-center items-center gap-4">
               <div className="relative w-[5dvw] h-[5dvw]">
                 <Image
                   alt="weather.com"
@@ -191,9 +202,10 @@ export default function Home() {
                 </h5>
               </div>
             </div> */}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       </div>
 
