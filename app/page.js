@@ -1,103 +1,203 @@
+"use client";
+import { Droplets, Locate, Search, Wind } from "lucide-react";
 import Image from "next/image";
+import moment from "moment";
+
+import { useEffect, useMemo, useState } from "react";
+
+import { getWeatherData } from "@/utils/fetchApi";
+import { ForcastCard } from "@/component/ForcastCard";
+import Head from "next/head";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [userInput, setUserInput] = useState("");
+  const [weatherForcast, setWeatherForcast] = useState();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  // get weather forcast...
+  // const getForcast = async () => {
+  //   try {
+  //     const weatherData = await getWeatherData(
+  //       userInput ? userInput : "Asansol"
+  //     );
+  //     setWeatherForcast(weatherData);
+  //     // console.log(weatherData);
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
+
+  const getCurrentLocation = () => {
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          // You can now call your weather API with lat/lon
+
+          const weatherData = await getWeatherData("", {
+            lat: latitude,
+            lon: longitude,
+          });
+
+          setWeatherForcast(weatherData);
+        },
+        (error) => {
+          console.error("Error getting location:", error.message);
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by this browser.");
+    }
+  };
+  useMemo(() => {
+    getCurrentLocation();
+  }, []);
+
+  const handleSearch = async () => {
+    const weatherData = await getWeatherData(userInput);
+    console.log(weatherData);
+    if (weatherData.errorMessage) {
+      getCurrentLocation();
+      return;
+    }
+    setWeatherForcast(weatherData);
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Realtime Weather App</title>
+      </Head>
+      <div className="bg-[var(--background) flex flex-col gap-6 min-h-[100dvh] text-[var(--textColor)] p-6">
+        <>
+          <div className=" flex flex-col-reverse 2xl:flex-row xl:flex-row lg:flex-row md:portrait:flex-row  justify-center items-center gap-6">
+            <div className="2xl:w-[25%] xl:w-[25%] lg:w-[25%] md:portrait:w-[40%] w-full bg-[#eeeeee]/10 rounded-md flex justify-center items-center px-2">
+              <input
+                className="w-full bg-transparent mainFont border-none outline-none rounded-md 2xl:text-[1.2dvw] xl:text-[1.2dvw] lg:text-[1.2dvw] md:portrait:text-[2.2dvw] text-[3.5dvw] px-4 py-1.5"
+                placeholder="Search location..."
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter") {
+                    handleSearch();
+                  }
+                }}
+              />
+              <button
+                onClick={handleSearch}
+                className="shrink-0 px-1 cursor-pointer"
+              >
+                <Search />
+              </button>
+            </div>
+            <div className="flex justify-center items-center gap-2">
+              <span>
+                <Locate />
+              </span>
+              <p className="capitalize mainFont font-[500] 2xl:text-[1.3dvw] xl:text-[1.3dvw] lg:text-[1.3dvw] md:portrait:text-[3dvw] text-[4dvw] ">
+                {weatherForcast?.city.name}
+              </p>
+            </div>
+            <div className="flex justify-center items-center gap-2">
+              <p className="font-[500] 2xl:text-[1.2dvw] xl:text-[1.2dvw] lg:text-[1.2dvw] md:portrait:text-[2.2dvw] text-[3.5dvw] mainFont">
+                {moment(weatherForcast?.forcast[0].dt_txt).format("lll")}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full min-h-[60dvh] flex flex-col 2xl:flex-row xl:flex-row lg:flex-row md:portrait:flex-col justify-between items-center gap-8  my-auto">
+            <div className="flex-1 w-full shrink-0  flex justify-start items-center h-full p-4">
+              <div className="w-full flex flex-col gap-8">
+                <div>
+                  <h2 className="relative 2xl:text-[8dvw] xl:text-[8dvw] lg:text-[8dvw] md:portrait:text-[12dvw] text-[16dvw] mainFont 2xl:leading-[9dvw] xl:leading-[9dvw] lg:leading-[9dvw] md:portrait:leading-[13dvw] leading-[17dvw] ">
+                    {weatherForcast?.forcast[0].main.temp}
+                    <span className="absolute -top-[2dvw] text-[1.4dvw] ">
+                      &#8451;
+                    </span>
+                  </h2>
+                  <p className="2xl:text-[2.5dvw] xl:text-[2.5dvw] lg:text-[2.5dvw] md:portrait:text-[5dvw] text-[6dvw] mainFont capitalize">
+                    {weatherForcast?.forcast[0].weather[0].description}
+                  </p>
+                </div>
+                <div className="flex justify-around items-center w-full">
+                  <div className="flex flex-col gap-1 justify-center items-center">
+                    <span className="flex justify-start items-center gap-2 paraFont">
+                      <Wind /> Wind
+                    </span>
+                    <h4 className=" 2xl:text-[2dvw] xl:text-[2dvw] lg:text-[2dvw] md:portrait:text-[4dvw] text-[5dvw] mainFont">
+                      {weatherForcast?.forcast[0].wind.speed}km/h
+                    </h4>
+                  </div>
+                  <div className="flex flex-col justify-center items-center gap-1">
+                    <span className="flex justify-start items-center gap-2 paraFont">
+                      <Droplets /> Humidity
+                    </span>
+                    <h4 className="2xl:text-[2dvw] xl:text-[2dvw] lg:text-[2dvw] md:portrait:text-[4dvw] text-[5dvw] mainFont">
+                      {weatherForcast?.forcast[0].main.humidity}%
+                    </h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="2xl:w-[45%] xl:w-[45%] lg:w-[45%] md:portrait:w-[45%] w-full shrink-0 relative flex justify-center items-center h-full p-4">
+              <div className="relative 2xl:w-[25dvw] xl:w-[25dvw] lg:w-[25dvw] md:portrait:w-[25dvw] w-[45dvw] 2xl:h-[25dvw] xl:h-[25dvw] lg:h-[25dvw] md:portrait:h-[25dvw] h-[40dvw]">
+                <Image
+                  alt="weather.com"
+                  className="w-full h-full object-contain"
+                  src={`https://openweathermap.org/img/wn/${weatherForcast?.forcast[0].weather[0].icon}@2x.png`}
+                
+                  fill
+                  loading="lazy"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 w-full shrink-0  h-full p-4">
+              <div className="border border-white/50 backdrop-blur-xl flex flex-col gap-8 bg-transparent rounded-xl p-4 ">
+                {weatherForcast?.forcast.map((cur, id) => (
+                  <ForcastCard
+                    key={id}
+                    icon={cur.weather[0].icon}
+                    day={cur.dt_txt}
+                    description={cur.weather[0].description}
+                    temp={cur.main.temp}
+                  />
+                ))}
+
+                {/* <div key={id} className="flex justify-center items-center gap-4">
+              <div className="relative w-[5dvw] h-[5dvw]">
+                <Image
+                  alt="weather.com"
+                  className="w-full h-full object-contain"
+                  src={`https://openweathermap.org/img/wn/${cur.weather[0].icon}@2x.png`}
+                  fill
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex-1 flex justify-between items-center">
+                <div>
+                  <h4 className="text-[1.5dvw] leading-[2dvw] font-[500] mainFont">
+                    {moment(cur.dt_txt).format("dddd")}
+                  </h4>
+                  <p className="text-[.9dvw] text-gray-400 font-[400]">
+                    {cur.weather[0].description}
+                  </p>
+                </div>
+                <h5 className="mainFont text-[1.5dvw] font-[500]">
+                  {cur.main.temp}&#176;
+                </h5>
+              </div>
+            </div> */}
+              </div>
+            </div>
+          </div>
+        </>
+      </div>
+
+      <ToastContainer />
+    </>
   );
 }
